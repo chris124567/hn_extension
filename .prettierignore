@@ -1,0 +1,6 @@
+assets/
+dist/
+icons/
+node_modules/
+release/
+store/*.png
