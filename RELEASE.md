@@ -38,7 +38,7 @@ identifies as violating the site guidelines, with per-rule thresholds.
 **Detailed description:**
 
 > HN Guideline Collapser automatically collapses Hacker News comments that
-> violate the guidelines according to our classifier.  You can choose
+> violate the guidelines according to our classifier. You can choose
 > thresholds for each guidelines such as flamebait, political battles,
 > complaining about broken back buttons/CSS, etc.
 >

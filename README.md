@@ -1,6 +1,6 @@
 # HN Guideline Collapser
 
-HN Guideline Collapser automatically collapses Hacker News comments that violate the guidelines according to our classifier.  You can choose thresholds for each guidelines such as flamebait, political battles, complaining about broken back buttons/CSS, etc.  Note that https://classify.stylometry.net/ has only classified comments starting on August 10th, 2026.  This means that for all threads before that date, this extension will have no effect.
+HN Guideline Collapser automatically collapses Hacker News comments that violate the guidelines according to our classifier. You can choose thresholds for each guidelines such as flamebait, political battles, complaining about broken back buttons/CSS, etc. Note that https://classify.stylometry.net/ has only classified comments starting on August 10th, 2026. This means that for all threads before that date, this extension will have no effect.
 
 The extension is independent and is not affiliated with or endorsed by Hacker
 News or Y Combinator.
