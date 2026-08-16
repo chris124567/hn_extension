@@ -1,0 +1,13 @@
+{
+  "name": "hn-guideline-collapser",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npx prettier -w ./src/*.ts && npx tsc && npx esbuild src/content.ts src/background.ts src/options.ts --bundle --format=iife --outdir=dist"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.9.2"
+  }
+}

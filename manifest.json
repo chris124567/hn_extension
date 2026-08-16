@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "HN Guideline Collapser",
+  "version": "0.1.0",
+  "description": "Automatically collapses Hacker News comments that a classifier scores as violating the site guidelines, with per-rule thresholds.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://classify.stylometry.net/*"],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://news.ycombinator.com/item*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}

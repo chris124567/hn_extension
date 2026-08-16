@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>HN Guideline Collapser — Settings</title>
+    <style>
+      body {
+        font-family: Verdana, Geneva, sans-serif;
+        font-size: 10pt;
+        color: #222;
+        background-color: #f6f6ef;
+        max-width: 44rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      h1 {
+        font-size: 12pt;
+        color: #ff6600;
+      }
+      section {
+        margin: 1rem 0;
+      }
+      #api-base-url {
+        width: 20rem;
+      }
+      .rule {
+        display: grid;
+        grid-template-columns: 1fr 12rem 3rem;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #e0e0d8;
+      }
+      .rule-label {
+        cursor: help;
+      }
+      output {
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+      }
+      #status {
+        margin-left: 0.75rem;
+        color: #ff6600;
+      }
+      .hint {
+        color: #828282;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>HN Guideline Collapser</h1>
+
+    <section>
+      <label for="api-base-url">API server</label>
+      <input
+        id="api-base-url"
+        type="url"
+        placeholder="https://classify.stylometry.net"
+      />
+    </section>
+
+    <p class="hint">
+      A comment is collapsed when its score for a rule meets that rule's
+      threshold. Lower thresholds collapse more aggressively; setting a rule to
+      1.00 effectively disables it. Hover a rule's name to read the full
+      guideline.
+    </p>
+
+    <div id="rules"></div>
+
+    <section>
+      <button id="reset">Reset to defaults</button>
+      <span id="status"></span>
+    </section>
+
+    <script src="dist/options.js"></script>
+  </body>
+</html>
