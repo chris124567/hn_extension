@@ -59,20 +59,39 @@
   }
 
   // src/settings.ts
+  var MIN_THRESHOLD = 0.2;
   var MAX_THRESHOLD = 1;
   var DEFAULT_THRESHOLD = 0.5;
-  var DEFAULT_API_BASE_URL = "https://classify.stylometry.net";
+  function scoreMeetsThreshold(score, threshold) {
+    return threshold < MAX_THRESHOLD && score >= threshold;
+  }
   function defaultThresholds() {
     return Object.fromEntries(RULES.map((rule) => [rule.id, DEFAULT_THRESHOLD]));
   }
-  async function loadSettings() {
-    const stored = (await chrome.storage.sync.get("settings"))["settings"];
+  function isRecord(value) {
+    return typeof value === "object" && value !== null;
+  }
+  function normalizeSettings(value) {
+    const stored = isRecord(value) ? value : void 0;
+    const storedThresholds = isRecord(stored?.["thresholds"]) ? stored["thresholds"] : void 0;
+    const thresholds = defaultThresholds();
+    for (const rule of RULES) {
+      const threshold = storedThresholds?.[String(rule.id)];
+      if (typeof threshold === "number" && Number.isFinite(threshold) && threshold >= MIN_THRESHOLD && threshold <= MAX_THRESHOLD) {
+        thresholds[rule.id] = threshold;
+      }
+    }
+    const storedEnabled = stored?.["enabled"];
     return {
-      apiBaseUrl: stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL,
-      // Merge over the defaults so rules added after settings were last saved
-      // still get a threshold.
-      thresholds: { ...defaultThresholds(), ...stored?.thresholds }
+      // Work immediately after installation. Preserve a valid stored preference;
+      // corrupt values fail closed instead of silently re-enabling a prior opt-out.
+      enabled: storedEnabled === void 0 ? true : storedEnabled === true,
+      thresholds
     };
+  }
+  async function loadSettings() {
+    const stored = await chrome.storage.local.get("settings");
+    return normalizeSettings(stored["settings"]);
   }
 
   // src/content.ts
@@ -87,9 +106,10 @@
     return result.violations;
   }
   function exceededRules(violation, settings) {
-    return violation.rules.filter(
-      (r) => r.score >= (settings.thresholds[r.rule] ?? MAX_THRESHOLD)
-    );
+    return violation.rules.filter((rule) => {
+      const threshold = settings.thresholds[rule.rule] ?? MAX_THRESHOLD;
+      return scoreMeetsThreshold(rule.score, threshold);
+    });
   }
   function describeRules(rules) {
     return rules.map((r) => `${ruleName(r.rule)}: ${r.score.toFixed(2)}`).join("\n");
@@ -127,14 +147,19 @@ ${describeRules(exceeded)}`;
     }
   }
   async function main() {
-    const itemId = new URLSearchParams(window.location.search).get("id");
-    if (itemId === null) {
+    const rawItemId = new URLSearchParams(window.location.search).get("id");
+    if (rawItemId === null || !/^[1-9]\d*$/.test(rawItemId)) {
       return;
     }
-    const [settings, violations] = await Promise.all([
-      loadSettings(),
-      fetchViolations(itemId)
-    ]);
+    const itemId = Number(rawItemId);
+    if (!Number.isSafeInteger(itemId)) {
+      return;
+    }
+    const settings = await loadSettings();
+    if (!settings.enabled) {
+      return;
+    }
+    const violations = await fetchViolations(itemId);
     for (const violation of violations) {
       const exceeded = exceededRules(violation, settings);
       if (exceeded.length > 0) {

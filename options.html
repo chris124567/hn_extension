@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HN Guideline Collapser — Settings</title>
     <style>
       body {
@@ -17,11 +18,27 @@
         font-size: 12pt;
         color: #ff6600;
       }
+      h2 {
+        margin: 0 0 0.5rem;
+        font-size: 10pt;
+      }
       section {
         margin: 1rem 0;
       }
-      #api-base-url {
-        width: 20rem;
+      .actions {
+        margin: 1rem 0;
+      }
+      .notice p {
+        margin: 0.4rem 0;
+      }
+      .enable {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+      }
+      .hint {
+        color: #828282;
       }
       .rule {
         display: grid;
@@ -34,6 +51,17 @@
       .rule-label {
         cursor: help;
       }
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
       output {
         font-variant-numeric: tabular-nums;
         text-align: right;
@@ -42,36 +70,78 @@
         margin-left: 0.75rem;
         color: #ff6600;
       }
-      .hint {
-        color: #828282;
+      #status.error {
+        color: #b00020;
+      }
+      @media (max-width: 42rem) {
+        .rule {
+          grid-template-columns: 1fr 3.5rem;
+        }
+        .rule input {
+          grid-column: 1;
+        }
+        .rule output {
+          grid-column: 2;
+        }
       }
     </style>
   </head>
   <body>
     <h1>HN Guideline Collapser</h1>
 
-    <section>
-      <label for="api-base-url">API server</label>
-      <input
-        id="api-base-url"
-        type="url"
-        placeholder="https://classify.stylometry.net"
-      />
-    </section>
+    <main>
+      <section class="notice" aria-labelledby="enable-heading">
+        <h2 id="enable-heading">How the extension uses data</h2>
+        <p>
+          On each Hacker News item page you visit, the extension sends that
+          page's numeric item ID to
+          <a
+            href="https://classify.stylometry.net/about"
+            target="_blank"
+            rel="noopener noreferrer"
+            >classify.stylometry.net</a
+          >
+          over HTTPS to retrieve public comment-classification scores. The
+          request also exposes your IP address and standard request metadata to
+          the service's Cloudflare CDN.
+        </p>
+        <p>
+          It does not send comment text, your Hacker News identity, votes,
+          cookies, or browsing activity outside Hacker News item pages. See the
+          <a
+            href="https://classify.stylometry.net/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            >privacy policy</a
+          >
+          for details.
+        </p>
+        <p>
+          Classification is enabled by default so comments collapse immediately.
+          Clear the checkbox below to stop all classifier requests and automatic
+          collapsing.
+        </p>
+        <label class="enable" for="enabled">
+          <input id="enabled" type="checkbox" />
+          <span>Enable classification requests and automatic collapsing</span>
+        </label>
+      </section>
 
-    <p class="hint">
-      A comment is collapsed when its score for a rule meets that rule's
-      threshold. Lower thresholds collapse more aggressively; setting a rule to
-      1.00 effectively disables it. Hover a rule's name to read the full
-      guideline.
-    </p>
+      <section aria-labelledby="threshold-heading">
+        <h2 id="threshold-heading">Collapse thresholds</h2>
+        <p class="hint">
+          A comment is collapsed when its classifier score meets a rule's
+          threshold. Lower values collapse more aggressively. Setting a rule to
+          1.00 disables it. Hover a rule's name to read the full guideline.
+        </p>
+        <div id="rules"></div>
+      </section>
 
-    <div id="rules"></div>
-
-    <section>
-      <button id="reset">Reset to defaults</button>
-      <span id="status"></span>
-    </section>
+      <div class="actions">
+        <button id="reset" type="button">Reset thresholds</button>
+        <span id="status" role="status" aria-live="polite"></span>
+      </div>
+    </main>
 
     <script src="dist/options.js"></script>
   </body>

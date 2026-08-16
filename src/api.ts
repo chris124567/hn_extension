@@ -28,7 +28,7 @@ export interface ViolationsResponse {
  */
 export interface FetchViolationsRequest {
   type: "fetch-violations";
-  itemId: string;
+  itemId: number;
 }
 
 export type FetchViolationsResult =

@@ -3,11 +3,16 @@ import type {
   FetchViolationsResult,
   RuleScore,
   Violation,
-} from "./api";
-import { ruleName } from "./rules";
-import { loadSettings, MAX_THRESHOLD, type Settings } from "./settings";
+} from "./api.ts";
+import { ruleName } from "./rules.ts";
+import {
+  loadSettings,
+  MAX_THRESHOLD,
+  scoreMeetsThreshold,
+  type Settings,
+} from "./settings.ts";
 
-async function fetchViolations(itemId: string): Promise<Violation[]> {
+async function fetchViolations(itemId: number): Promise<Violation[]> {
   const request: FetchViolationsRequest = { type: "fetch-violations", itemId };
   const result = (await chrome.runtime.sendMessage(
     request,
@@ -20,9 +25,10 @@ async function fetchViolations(itemId: string): Promise<Violation[]> {
 
 /** The rules whose score meets the user's threshold for that rule. */
 function exceededRules(violation: Violation, settings: Settings): RuleScore[] {
-  return violation.rules.filter(
-    (r) => r.score >= (settings.thresholds[r.rule] ?? MAX_THRESHOLD),
-  );
+  return violation.rules.filter((rule) => {
+    const threshold = settings.thresholds[rule.rule] ?? MAX_THRESHOLD;
+    return scoreMeetsThreshold(rule.score, threshold);
+  });
 }
 
 function describeRules(rules: RuleScore[]): string {
@@ -93,14 +99,20 @@ function collapseComment(violation: Violation, exceeded: RuleScore[]): void {
 }
 
 async function main(): Promise<void> {
-  const itemId = new URLSearchParams(window.location.search).get("id");
-  if (itemId === null) {
+  const rawItemId = new URLSearchParams(window.location.search).get("id");
+  if (rawItemId === null || !/^[1-9]\d*$/.test(rawItemId)) {
     return;
   }
-  const [settings, violations] = await Promise.all([
-    loadSettings(),
-    fetchViolations(itemId),
-  ]);
+  const itemId = Number(rawItemId);
+  if (!Number.isSafeInteger(itemId)) {
+    return;
+  }
+
+  const settings = await loadSettings();
+  if (!settings.enabled) {
+    return;
+  }
+  const violations = await fetchViolations(itemId);
   for (const violation of violations) {
     const exceeded = exceededRules(violation, settings);
     if (exceeded.length > 0) {

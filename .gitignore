@@ -1,1 +1,5 @@
 node_modules/
+release/
+*.crx
+*.pem
+.DS_Store

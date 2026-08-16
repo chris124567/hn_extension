@@ -58,24 +58,40 @@
   var MIN_THRESHOLD = 0.2;
   var MAX_THRESHOLD = 1;
   var DEFAULT_THRESHOLD = 0.5;
-  var DEFAULT_API_BASE_URL = "https://classify.stylometry.net";
   function defaultThresholds() {
     return Object.fromEntries(RULES.map((rule) => [rule.id, DEFAULT_THRESHOLD]));
   }
-  async function loadSettings() {
-    const stored = (await chrome.storage.sync.get("settings"))["settings"];
+  function isRecord(value) {
+    return typeof value === "object" && value !== null;
+  }
+  function normalizeSettings(value) {
+    const stored = isRecord(value) ? value : void 0;
+    const storedThresholds = isRecord(stored?.["thresholds"]) ? stored["thresholds"] : void 0;
+    const thresholds = defaultThresholds();
+    for (const rule of RULES) {
+      const threshold = storedThresholds?.[String(rule.id)];
+      if (typeof threshold === "number" && Number.isFinite(threshold) && threshold >= MIN_THRESHOLD && threshold <= MAX_THRESHOLD) {
+        thresholds[rule.id] = threshold;
+      }
+    }
+    const storedEnabled = stored?.["enabled"];
     return {
-      apiBaseUrl: stored?.apiBaseUrl ?? DEFAULT_API_BASE_URL,
-      // Merge over the defaults so rules added after settings were last saved
-      // still get a threshold.
-      thresholds: { ...defaultThresholds(), ...stored?.thresholds }
+      // Work immediately after installation. Preserve a valid stored preference;
+      // corrupt values fail closed instead of silently re-enabling a prior opt-out.
+      enabled: storedEnabled === void 0 ? true : storedEnabled === true,
+      thresholds
     };
   }
+  async function loadSettings() {
+    const stored = await chrome.storage.local.get("settings");
+    return normalizeSettings(stored["settings"]);
+  }
   async function saveSettings(settings) {
-    await chrome.storage.sync.set({ settings });
+    await chrome.storage.local.set({ settings: normalizeSettings(settings) });
   }
 
   // src/options.ts
+  var statusTimeout;
   function byId(id, ctor) {
     const element = document.getElementById(id);
     if (!(element instanceof ctor)) {
@@ -83,18 +99,28 @@
     }
     return element;
   }
-  function flashStatus(message) {
+  function flashStatus(message, isError = false) {
     const status = byId("status", HTMLSpanElement);
+    if (statusTimeout !== void 0) {
+      clearTimeout(statusTimeout);
+    }
     status.textContent = message;
-    setTimeout(() => {
+    status.classList.toggle("error", isError);
+    statusTimeout = setTimeout(() => {
       if (status.textContent === message) {
         status.textContent = "";
+        status.classList.remove("error");
       }
-    }, 1500);
+    }, 2500);
   }
   async function persist(settings) {
-    await saveSettings(settings);
-    flashStatus("Saved");
+    try {
+      await saveSettings(settings);
+      flashStatus("Saved");
+    } catch (error) {
+      console.error("HN Guideline Collapser settings save:", error);
+      flashStatus("Could not save", true);
+    }
   }
   function buildRuleRow(rule, initial, onCommit) {
     const row = document.createElement("div");
@@ -112,6 +138,11 @@
     slider.step = "0.01";
     const value = document.createElement("output");
     value.htmlFor.add(slider.id);
+    const help = document.createElement("span");
+    help.id = `rule-help-${rule.id}`;
+    help.className = "visually-hidden";
+    help.textContent = rule.text;
+    slider.setAttribute("aria-describedby", help.id);
     const setThreshold = (threshold) => {
       slider.value = String(threshold);
       value.textContent = threshold.toFixed(2);
@@ -123,16 +154,15 @@
     slider.addEventListener("change", () => {
       onCommit(Number(slider.value));
     });
-    row.append(label, slider, value);
+    row.append(label, slider, value, help);
     return { element: row, setThreshold };
   }
   async function main() {
     const settings = await loadSettings();
-    const apiInput = byId("api-base-url", HTMLInputElement);
-    apiInput.value = settings.apiBaseUrl;
-    apiInput.addEventListener("change", () => {
-      settings.apiBaseUrl = apiInput.value.trim() || DEFAULT_API_BASE_URL;
-      apiInput.value = settings.apiBaseUrl;
+    const enabledInput = byId("enabled", HTMLInputElement);
+    enabledInput.checked = settings.enabled;
+    enabledInput.addEventListener("change", () => {
+      settings.enabled = enabledInput.checked;
       void persist(settings);
     });
     const rulesContainer = byId("rules", HTMLDivElement);
@@ -149,8 +179,6 @@
       return { rule, row };
     });
     byId("reset", HTMLButtonElement).addEventListener("click", () => {
-      settings.apiBaseUrl = DEFAULT_API_BASE_URL;
-      apiInput.value = DEFAULT_API_BASE_URL;
       for (const { rule, row } of rows) {
         settings.thresholds[rule.id] = DEFAULT_THRESHOLD;
         row.setThreshold(DEFAULT_THRESHOLD);

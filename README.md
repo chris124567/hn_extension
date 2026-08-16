@@ -1,56 +1,66 @@
 # HN Guideline Collapser
 
-Chrome extension that automatically collapses comments on Hacker News item
-pages when the rule classifier's API scores them as violating the site
-guidelines.
+A Chrome extension that automatically collapses Hacker News comments when a
+classifier scores them above your per-guideline thresholds.
 
-On a page like `https://news.ycombinator.com/item?id=24607896` it asks the
-`serve` API for every violation in the item's subtree
-(`GET /violations/24607896?threshold=0.2`), filters the scores against the
-user's per-rule thresholds, and collapses each offending comment. Hovering
-the toggle (the minus button, or the "n more" text once collapsed) shows
-which rules were violated and their scores.
+The extension is independent and is not affiliated with or endorsed by Hacker
+News or Y Combinator.
 
-## Build
+## How it works
+
+On Hacker News item pages, the extension requests precomputed scores for the
+page's public comments from `https://classify.stylometry.net`. It filters those
+scores against ten configurable thresholds and applies the same DOM state that
+Hacker News uses for its own comment-collapse control. You can expand or
+re-collapse every comment normally.
+
+The extension works immediately after installation. Its first-run settings page
+clearly discloses the network request and provides an off switch. It never sends
+comment text, Hacker News account data, votes, or cookies. Read the full [privacy
+policy](PRIVACY.md).
+
+## Development
+
+Requirements: Node.js 22 or newer, npm, and Python 3 (only for creating the
+release ZIP).
 
 ```sh
-npm install
+npm ci
+npm run check
 npm run build
 ```
 
-This formats, type-checks, and bundles `src/` into `dist/`.
+Useful commands:
 
-## Install
+- `npm run format` formats source and documentation.
+- `npm run check` checks formatting and types, runs tests, and audits packages.
+- `npm run build` type-checks and bundles `src/` into `dist/`.
+- `npm run package` runs all checks and creates the upload-ready ZIP in
+  `release/`.
 
-1. Open `chrome://extensions`, enable **Developer mode**.
-2. **Load unpacked** → select this `extension/` directory.
+To test an unpacked build, open `chrome://extensions`, enable **Developer
+mode**, choose **Load unpacked**, and select this repository. The settings page
+opens on first install with classification enabled; review the disclosure, then
+test an HN item page.
 
-By default the extension talks to the hosted API at
-`https://classify.stylometry.net`, so it works without running anything
-locally. To develop against your own instance, run the `serve` binary (which
-in turn needs the model server), add its host to `host_permissions` in
-`manifest.json` (e.g. `http://localhost/*`), and point the API server URL on
-the options page at it, e.g. `http://localhost:3030`.
+## Configuration
 
-## Configure
+Each guideline has a threshold from 0.20 to 1.00:
 
-Open the extension's options page (chrome://extensions → Details → Extension
-options). Each of the ten guidelines has a threshold slider from 0.20 to 1.00:
+- a comment is collapsed when its score meets or exceeds the selected value;
+- lower values collapse more aggressively;
+- 1.00 disables the rule;
+- the default is 0.50.
 
-- a comment is collapsed when its score for a rule **meets or exceeds** that
-  rule's threshold;
-- 1.00 effectively disables a rule; the default is 0.50;
-- the API server URL is also configurable there.
+The extension fetches scores at the lowest configurable threshold and filters
+them locally, so one request supports every combination of rule settings.
+Settings are stored only in `chrome.storage.local`.
 
-Violations are always fetched from the API at threshold 0.2 (the lowest
-configurable value) and filtered locally, so one request covers any
-combination of per-rule settings. Settings live in `chrome.storage.sync`.
+## Release
 
-## Notes
+See [RELEASE.md](RELEASE.md) for the Chrome Web Store copy, privacy declarations,
+reviewer instructions, asset requirements, and the exact submission checklist.
 
-- Collapsing applies the same DOM changes hn.js's own toggleCollapse makes
-  (`coll` on the row, `noshow`/`nosee` on the body and descendants, "[n more]"
-  toggle text) but skips its `collapse?id=` request, so nothing is persisted
-  to the user's account. HN's toggle still expands the comment normally.
-- `host_permissions` only covers `classify.stylometry.net`; if you point the
-  extension at an API server on another host, add it to `manifest.json`.
+## License
+
+[MIT](LICENSE) © 2026 Christopher Tarry.

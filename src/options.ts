@@ -1,13 +1,14 @@
-import { RULES, type Rule } from "./rules";
+import { RULES, type Rule } from "./rules.ts";
 import {
-  DEFAULT_API_BASE_URL,
   DEFAULT_THRESHOLD,
   loadSettings,
   MAX_THRESHOLD,
   MIN_THRESHOLD,
   saveSettings,
   type Settings,
-} from "./settings";
+} from "./settings.ts";
+
+let statusTimeout: number | undefined;
 
 function byId<T extends HTMLElement>(id: string, ctor: new () => T): T {
   const element = document.getElementById(id);
@@ -17,19 +18,29 @@ function byId<T extends HTMLElement>(id: string, ctor: new () => T): T {
   return element;
 }
 
-function flashStatus(message: string): void {
+function flashStatus(message: string, isError = false): void {
   const status = byId("status", HTMLSpanElement);
+  if (statusTimeout !== undefined) {
+    clearTimeout(statusTimeout);
+  }
   status.textContent = message;
-  setTimeout(() => {
+  status.classList.toggle("error", isError);
+  statusTimeout = setTimeout(() => {
     if (status.textContent === message) {
       status.textContent = "";
+      status.classList.remove("error");
     }
-  }, 1500);
+  }, 2500);
 }
 
 async function persist(settings: Settings): Promise<void> {
-  await saveSettings(settings);
-  flashStatus("Saved");
+  try {
+    await saveSettings(settings);
+    flashStatus("Saved");
+  } catch (error: unknown) {
+    console.error("HN Guideline Collapser settings save:", error);
+    flashStatus("Could not save", true);
+  }
 }
 
 interface RuleRow {
@@ -61,6 +72,12 @@ function buildRuleRow(
   const value = document.createElement("output");
   value.htmlFor.add(slider.id);
 
+  const help = document.createElement("span");
+  help.id = `rule-help-${rule.id}`;
+  help.className = "visually-hidden";
+  help.textContent = rule.text;
+  slider.setAttribute("aria-describedby", help.id);
+
   const setThreshold = (threshold: number): void => {
     slider.value = String(threshold);
     value.textContent = threshold.toFixed(2);
@@ -76,18 +93,17 @@ function buildRuleRow(
     onCommit(Number(slider.value));
   });
 
-  row.append(label, slider, value);
+  row.append(label, slider, value, help);
   return { element: row, setThreshold };
 }
 
 async function main(): Promise<void> {
   const settings = await loadSettings();
 
-  const apiInput = byId("api-base-url", HTMLInputElement);
-  apiInput.value = settings.apiBaseUrl;
-  apiInput.addEventListener("change", () => {
-    settings.apiBaseUrl = apiInput.value.trim() || DEFAULT_API_BASE_URL;
-    apiInput.value = settings.apiBaseUrl;
+  const enabledInput = byId("enabled", HTMLInputElement);
+  enabledInput.checked = settings.enabled;
+  enabledInput.addEventListener("change", () => {
+    settings.enabled = enabledInput.checked;
     void persist(settings);
   });
 
@@ -106,8 +122,6 @@ async function main(): Promise<void> {
   });
 
   byId("reset", HTMLButtonElement).addEventListener("click", () => {
-    settings.apiBaseUrl = DEFAULT_API_BASE_URL;
-    apiInput.value = DEFAULT_API_BASE_URL;
     for (const { rule, row } of rows) {
       settings.thresholds[rule.id] = DEFAULT_THRESHOLD;
       row.setThreshold(DEFAULT_THRESHOLD);
