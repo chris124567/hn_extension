@@ -33,12 +33,14 @@ The source and packaged extension are released under the MIT License.
 **Category:** Productivity
 
 **Summary:** Automatically collapses Hacker News comments that a classifier
-scores as violating the site guidelines, with per-rule thresholds.
+identifies as violating the site guidelines, with per-rule thresholds.
 
 **Detailed description:**
 
-> HN Guideline Collapser automatically collapses Hacker News comments whose
-> public guideline-classifier scores meet thresholds you choose.
+> HN Guideline Collapser automatically collapses Hacker News comments that
+> violate the guidelines according to our classifier.  You can choose
+> thresholds for each guidelines such as flamebait, political battles,
+> complaining about broken back buttons/CSS, etc.
 >
 > DATA DISCLOSURE: The extension is enabled by default. It sends the numeric ID
 > of each Hacker News item page you visit to
@@ -54,7 +56,6 @@ scores as violating the site guidelines, with per-rule thresholds.
 > - independent thresholds for ten Hacker News discussion guidelines;
 > - native-feeling collapsed comments that can still be expanded normally;
 > - score and rule details in each marked comment's collapse-control tooltip;
-> - a true off setting and a 1.00 setting that disables any individual rule;
 > - no ads, analytics, account, or remote executable code.
 >
 > This is an independent project and is not affiliated with or endorsed by
@@ -72,7 +73,7 @@ scores as violating the site guidelines, with per-rule thresholds.
 ## Privacy practices tab
 
 **Single purpose:** Automatically collapse Hacker News comments whose
-precomputed guideline-classifier scores meet thresholds selected by the user.
+precomputed guideline violation scores meet thresholds selected by the user.
 
 **Permission justifications:**
 
@@ -100,7 +101,7 @@ operate this feature without advertising, sale, or unrelated profiling.
 
 1. Install the extension. Its settings page opens automatically.
 2. Confirm that classification is enabled by default and review the disclosure.
-3. Open a story with comments from `https://news.ycombinator.com/news`.
+3. Open a story with comments from `https://news.ycombinator.com/news`, such as https://news.ycombinator.com/item?id=49261128.
 4. Comments scoring at least 0.50 for an enabled rule collapse automatically.
    Their collapse control is bold and its tooltip lists matching rules/scores.
 5. Click a collapsed comment's control to verify that Hacker News expands it

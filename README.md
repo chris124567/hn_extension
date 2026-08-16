@@ -1,7 +1,6 @@
 # HN Guideline Collapser
 
-A Chrome extension that automatically collapses Hacker News comments when a
-classifier scores them above your per-guideline thresholds.
+HN Guideline Collapser automatically collapses Hacker News comments that violate the guidelines according to our classifier.  You can choose thresholds for each guidelines such as flamebait, political battles, complaining about broken back buttons/CSS, etc.
 
 The extension is independent and is not affiliated with or endorsed by Hacker
 News or Y Combinator.
