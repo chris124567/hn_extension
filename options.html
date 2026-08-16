@@ -93,17 +93,17 @@
       <section class="notice" aria-labelledby="enable-heading">
         <h2 id="enable-heading">How the extension uses data</h2>
         <p>
-          On each Hacker News item page you visit, the extension sends that
-          page's numeric item ID to
+          When you open a Hacker News discussion, the extension asks
           <a
             href="https://classify.stylometry.net/about"
             target="_blank"
             rel="noopener noreferrer"
             >classify.stylometry.net</a
           >
-          over HTTPS to retrieve public comment-classification scores. The
-          request also exposes your IP address and standard request metadata to
-          the service's Cloudflare CDN.
+          for the precomputed scores for that page's public comments. To do
+          this, it sends the page's numeric item ID over HTTPS. The request also
+          exposes your IP address and standard request metadata to the service's
+          Cloudflare CDN.
         </p>
         <p>
           It does not send comment text, your Hacker News identity, votes,
@@ -132,7 +132,7 @@
         <p class="hint">
           A comment is collapsed when its classifier score meets a rule's
           threshold. Lower values collapse more aggressively. Setting a rule to
-          1.00 disables it. Hover a rule's name to read the full guideline.
+          1.00 disables it. Hover over a rule's name to read the full guideline.
         </p>
         <div id="rules"></div>
       </section>
