@@ -19,7 +19,7 @@
     "package": "npm run check && npm run bundle && python3 scripts/package.py"
   },
   "devDependencies": {
-    "@types/chrome": "^0.2.6",
+    "@types/chrome": "^0.3.4",
     "esbuild": "^0.28.2",
     "prettier": "^3.6.2",
     "typescript": "^7.0.2"
